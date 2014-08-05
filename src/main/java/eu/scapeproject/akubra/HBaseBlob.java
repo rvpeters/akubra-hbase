@@ -14,7 +14,6 @@ import org.akubraproject.MissingBlobException;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.metrics.HBaseInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,11 +23,12 @@ public class HBaseBlob implements Blob {
     private final HBaseBlobStoreConnection conn;
     private final URI id;
     private final Get get;
-    
+    private final URI storeId; 
 
-    public HBaseBlob(HBaseBlobStoreConnection conn,URI id) {
+    public HBaseBlob(final URI id, final HBaseBlobStoreConnection conn) {
         super();
         this.conn = conn;
+        this.storeId = this.conn.getBlobStore().getId();
         this.id=id;
         this.get=new Get(id.toASCIIString().getBytes());
         System.out.println("created Blob " + id.toASCIIString());
@@ -59,16 +59,17 @@ public class HBaseBlob implements Blob {
 
     public long getSize() throws IOException, MissingBlobException {
         byte[] val= this.conn.getTable().get(get).getValue(HBaseBlobStore.DATA_FAMILY, HBaseBlobStore.DEFAULT_QUALIFIER);
-        if (val == null) {
-            throw new MissingBlobException(id);
+        int len = 0;
+        if (val != null) {
+          len = val.length;
         }
-        return val.length;
+        return len;
     }
 
     public Blob moveTo(URI arg0, Map<String, String> arg1) throws DuplicateBlobException, IOException, MissingBlobException, NullPointerException,
             IllegalArgumentException {
         System.out.println("moving blob " + id.toASCIIString());
-        HBaseBlob moved=new HBaseBlob(this.conn,arg0);
+        HBaseBlob moved=new HBaseBlob(arg0, this.conn);
         OutputStream os=null;
         InputStream is=null;
         try{

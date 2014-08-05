@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -77,11 +78,11 @@ public class HBaseBlobStoreConnection implements BlobStoreConnection {
     }
 
     public Blob getBlob(URI arg0, Map<String, String> arg1) throws IOException, UnsupportedIdException, UnsupportedOperationException {
-        return new HBaseBlob(this, arg0);
+        return new HBaseBlob(arg0, this);
     }
 
     public Blob getBlob(InputStream is, long arg1, Map<String, String> arg2) throws IOException, UnsupportedOperationException {
-        HBaseBlob blob=new HBaseBlob(this,URI.create(this.store.getId().toASCIIString() + "/" + UUID.randomUUID().toString()));
+        HBaseBlob blob=new HBaseBlob(URI.create(this.store.getId().toASCIIString() + "/" + UUID.randomUUID().toString()),this);
         System.out.println("creating new blob " + blob.getId().toASCIIString());
         OutputStream os=null;
         try {
